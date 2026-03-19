@@ -1,4 +1,4 @@
-import { defineConfig } from "vite-plus";
+import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
   pack: {
@@ -13,5 +13,9 @@ export default defineConfig({
       typeCheck: true,
     },
   },
-  fmt: {},
+  fmt: {
+    singleQuote: true,
+    printWidth: 120,
+    experimentalSortImports: {},
+  },
 });

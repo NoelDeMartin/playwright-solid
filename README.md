@@ -1,23 +1,3 @@
-# vite-plus-starter
+# Playwright Solid ![CI](https://github.com/NoelDeMartin/playwright-solid/actions/workflows/ci.yml/badge.svg)
 
-A starter for creating a Vite Plus project.
-
-## Development
-
-- Install dependencies:
-
-```bash
-vp install
-```
-
-- Run the unit tests:
-
-```bash
-vp test
-```
-
-- Build the library:
-
-```bash
-vp pack
-```
+Playwright library to test applications using the [Solid Protocol](https://solidproject.org/).
