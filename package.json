@@ -19,9 +19,19 @@
     "test": "vp test",
     "check": "vp check"
   },
+  "dependencies": {
+    "@inrupt/solid-client-authn-core": "^3.1.1",
+    "@noeldemartin/solid-utils": "next",
+    "@noeldemartin/utils": "next",
+    "@playwright/test": "^1.58.2",
+    "node-fetch": "^3.3.2",
+    "soukai-bis": "next",
+    "zod": "^4.3.6"
+  },
   "devDependencies": {
     "@noeldemartin/scripts": "next",
     "@types/node": "^25.5.0",
+    "@types/node-fetch": "^2.6.13",
     "@typescript/native-preview": "7.0.0-dev.20260316.1",
     "bumpp": "^11.0.1",
     "typescript": "^5.9.3",
