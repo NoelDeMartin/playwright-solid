@@ -1,25 +1,39 @@
 import { buildAuthenticatedFetch, createDpopHeader, generateDpopKeyPair } from '@inrupt/solid-client-authn-core';
-import { fail, objectWithoutEmpty } from '@noeldemartin/utils';
-import fetch from 'node-fetch'; // or use native fetch in node >=18
+import { fail, isSuccessfulResponse, objectWithoutEmpty } from '@noeldemartin/utils';
 import { z } from 'zod';
 
 import { config, serverUrl, webId } from './utils';
 
-const UnsuccessfulResponseSchema = z.object({
-  statusCode: z.number().or(z.string()),
-  message: z.string().optional(),
-  name: z.string().optional(),
+let authenticatedFetch: typeof globalThis.fetch | null = null;
+
+const CSSResponseSchema = z.object({
+  controls: z.any(),
 });
 
-function isUnsuccessfulResponse(response: unknown, message?: string): response is { message?: string; name?: string } {
-  const parsed = UnsuccessfulResponseSchema.safeParse(response);
-  if (!parsed.success) return false;
+const CSSCredentialsResponseSchema = CSSResponseSchema.extend({
+  id: z.string(),
+  secret: z.string(),
+});
 
-  const data = parsed.data;
-  return Number(data.statusCode) % 100 !== 2 && (!message || data.message === message);
+const CSSAuthorizedResponseSchema = CSSResponseSchema.extend({
+  authorization: z.string(),
+});
+
+const AccessTokenResponseSchema = z.object({
+  access_token: z.string(),
+});
+
+function responseErrorMessage(context: string, response: unknown): string {
+  if (typeof response === 'object' && response !== null && 'message' in response) {
+    return `[${context}] ${String(response.message)}`;
+  }
+
+  if (typeof response === 'object' && response !== null && 'name' in response) {
+    return `[${context}] ${String(response.name)}`;
+  }
+
+  return `[${context}] Unknown error response: ${JSON.stringify(response)}`;
 }
-
-let authenticatedFetch: typeof globalThis.fetch | null = null;
 
 async function controlUrl(key: string, authorization?: string): Promise<string> {
   const response = await fetch(serverUrl('/.account/'), {
@@ -27,19 +41,15 @@ async function controlUrl(key: string, authorization?: string): Promise<string> 
       Authorization: authorization && `CSS-Account-Token ${authorization}`,
     }) as Record<string, string>,
   });
-  const json = await response.json();
 
-  if (isUnsuccessfulResponse(json)) {
-    if (json.message?.includes('does not belong to this account')) {
-      // Our test deleted the profile card but then CSS recreated it without the right webId linkage or similar,
-      // or we deleted something we shouldn't have and now the WebID isn't attached to the account properly.
-      // Let's log it, and see if it recovers, though it might throw.
-    }
-    throw new Error(json.message || json.name);
+  const json = await response.json();
+  const { success, data: parsed } = CSSResponseSchema.safeParse(json);
+
+  if (!isSuccessfulResponse(response) || !success) {
+    throw new Error(responseErrorMessage('controlUrl', json));
   }
 
-  const parsed = z.object({ controls: z.record(z.string(), z.any()) }).parse(json);
-  const url = key.split('.').reduce((controls, part) => controls[part], parsed.controls as Record<string, any>);
+  const url = key.split('.').reduce((controls, part) => controls[part], parsed.controls);
 
   return typeof url === 'string' ? url : fail(`'${key}' CSS control not found`);
 }
@@ -55,12 +65,12 @@ async function getCredentials(authorization: string): Promise<{ id: string; secr
     body: JSON.stringify({ webId: webId() }),
   });
   const json = await response.json();
+  const { success, data: parsed } = CSSCredentialsResponseSchema.safeParse(json);
 
-  if (isUnsuccessfulResponse(json)) {
-    throw new Error(json.message || json.name);
+  if (!isSuccessfulResponse(response) || !success) {
+    throw new Error(responseErrorMessage('getCredentials', json));
   }
 
-  const parsed = z.object({ id: z.string(), secret: z.string() }).parse(json);
   return { id: parsed.id, secret: parsed.secret };
 }
 
@@ -75,12 +85,12 @@ async function logIn(): Promise<string | null> {
     }),
   });
   const json = await response.json();
+  const { success, data: parsed } = CSSAuthorizedResponseSchema.safeParse(json);
 
-  if (isUnsuccessfulResponse(json, 'Invalid email/password combination.')) {
+  if (!isSuccessfulResponse(response) || !success) {
     return null;
   }
 
-  const parsed = z.object({ authorization: z.string() }).parse(json);
   return parsed.authorization;
 }
 
@@ -89,11 +99,12 @@ async function createAccount(): Promise<string> {
   const response = await fetch(url, { method: 'POST' });
   const json = await response.json();
 
-  if (isUnsuccessfulResponse(json)) {
-    throw new Error(json.message || json.name);
+  const { success, data: parsed } = CSSAuthorizedResponseSchema.safeParse(json);
+
+  if (!isSuccessfulResponse(response) || !success) {
+    throw new Error(responseErrorMessage('logIn', json));
   }
 
-  const parsed = z.object({ authorization: z.string() }).parse(json);
   return parsed.authorization;
 }
 
@@ -112,8 +123,8 @@ async function createPassword(authorization: string): Promise<void> {
   });
   const json = await response.json();
 
-  if (isUnsuccessfulResponse(json)) {
-    throw new Error(json.message || json.name);
+  if (!isSuccessfulResponse(response)) {
+    throw new Error(responseErrorMessage('createPassword', json));
   }
 }
 
@@ -131,15 +142,8 @@ async function createPOD(authorization: string): Promise<void> {
   });
   const json = await response.json();
 
-  if (isUnsuccessfulResponse(json)) {
-    if (
-      json.message?.includes('Existing containers cannot be updated via PUT') ||
-      json.message?.includes('Pod creation failed')
-    ) {
-      // This implies the pod might have been created already and something else failed. We can ignore it safely.
-      return;
-    }
-    throw new Error(json.message || json.name);
+  if (!isSuccessfulResponse(response)) {
+    throw new Error(responseErrorMessage('createPOD', json));
   }
 }
 
@@ -172,16 +176,13 @@ export async function authenticate(): Promise<typeof globalThis.fetch> {
       body: 'grant_type=client_credentials&scope=webid',
     });
     const json = await response.json();
+    const { success, data: parsed } = AccessTokenResponseSchema.safeParse(json);
 
-    if (isUnsuccessfulResponse(json)) {
-      throw new Error(json.message || json.name);
+    if (!success) {
+      throw new Error(responseErrorMessage('authenticate', json));
     }
 
-    const parsed = z.object({ access_token: z.string() }).parse(json);
-
-    authenticatedFetch = buildAuthenticatedFetch(parsed.access_token, {
-      dpopKey,
-    }) as unknown as typeof globalThis.fetch;
+    authenticatedFetch = buildAuthenticatedFetch(parsed.access_token, { dpopKey });
   }
 
   return authenticatedFetch;
