@@ -56,8 +56,8 @@ async function replaceDocument(url: string, body: string): Promise<void> {
 async function resetPod(retry: boolean = true): Promise<void> {
   const authenticatedFetch = await authenticate();
 
-  bootCoreModels(true);
-  setEngine(new SolidEngine(authenticatedFetch));
+  bootCoreModels({ reset: true });
+  setEngine(new SolidEngine({ fetch: authenticatedFetch }));
 
   try {
     await deleteContainer(podUrl('/'));
