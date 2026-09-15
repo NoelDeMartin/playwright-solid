@@ -18,7 +18,11 @@ function defaultPodDocuments(): string[] {
 }
 
 async function deleteContainer(url: string): Promise<void> {
-  const container = await Container.findOrFail(url);
+  const container = await Container.find(url);
+
+  if (!container) {
+    return;
+  }
 
   await Promise.all(
     container.resourceUrls.map(async (url) => {
