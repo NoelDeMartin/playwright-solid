@@ -1,47 +1,45 @@
 {
-  "name": "playwright-solid",
-  "version": "0.0.0",
-  "license": "MIT",
-  "author": "Noel De Martin",
-  "repository": "github:NoelDeMartin/playwright-solid",
-  "files": [
-    "dist"
-  ],
-  "type": "module",
-  "sideEffects": false,
-  "exports": {
-    ".": "./dist/index.mjs",
-    "./package.json": "./package.json"
-  },
-  "scripts": {
-    "build": "vp pack",
-    "dev": "vp pack --watch",
-    "test": "vp test",
-    "check": "vp check"
-  },
-  "dependencies": {
-    "@inrupt/solid-client-authn-core": "^3.1.1",
-    "@noeldemartin/solid-utils": "next",
-    "@noeldemartin/utils": "next",
-    "@playwright/test": "^1.58.2",
-    "node-fetch": "^3.3.2",
-    "soukai-bis": "next",
-    "zod": "^4.3.6"
-  },
-  "devDependencies": {
-    "@noeldemartin/scripts": "next",
-    "@types/node": "^25.5.0",
-    "@types/node-fetch": "^2.6.13",
-    "@typescript/native-preview": "7.0.0-dev.20260316.1",
-    "bumpp": "^11.0.1",
-    "typescript": "^5.9.3",
-    "vite-plus": "^0.1.11"
-  },
-  "packageManager": "pnpm@10.32.1",
-  "pnpm": {
-    "overrides": {
-      "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-      "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
-    }
-  }
+    "name": "playwright-solid",
+    "version": "0.0.0",
+    "license": "MIT",
+    "author": "Noel De Martin",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/NoelDeMartin/playwright-solid.git"
+    },
+    "files": [
+        "dist"
+    ],
+    "type": "module",
+    "sideEffects": false,
+    "exports": {
+        ".": "./dist/index.mjs",
+        "./package.json": "./package.json"
+    },
+    "scripts": {
+        "build": "vp pack",
+        "dev": "vp pack --watch",
+        "test": "vp test"
+    },
+    "dependencies": {
+        "@inrupt/solid-client-authn-core": "^3.1.1",
+        "@noeldemartin/solid-utils": "next",
+        "@noeldemartin/utils": "next",
+        "@playwright/test": "^1.58.2",
+        "node-fetch": "^3.3.2",
+        "soukai-bis": "next",
+        "zod": "^4.3.6"
+    },
+    "devDependencies": {
+        "@arethetypeswrong/core": "^0.18.5",
+        "@noeldemartin/scripts": "next",
+        "@types/node": "^26.6.3",
+        "@types/node-fetch": "^2.6.13",
+        "bumpp": "^11.0.1",
+        "publint": "^0.3.24",
+        "typescript": "~6.0.2",
+        "vite": "catalog:",
+        "vite-plus": "catalog:"
+    },
+    "packageManager": "pnpm@11.5.2"
 }
