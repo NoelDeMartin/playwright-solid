@@ -8,13 +8,14 @@
         "url": "git+https://github.com/NoelDeMartin/playwright-solid.git"
     },
     "files": [
+        "src",
         "dist"
     ],
     "type": "module",
     "sideEffects": false,
     "exports": {
-        ".": "./dist/index.mjs",
-        "./package.json": "./package.json"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
     },
     "scripts": {
         "build": "vp pack",
@@ -33,6 +34,7 @@
     "devDependencies": {
         "@arethetypeswrong/core": "^0.18.5",
         "@noeldemartin/scripts": "next",
+        "@noeldemartin/vite-plus-config": "next",
         "@types/node": "^26.6.3",
         "@types/node-fetch": "^2.6.13",
         "bumpp": "^11.0.1",
@@ -41,5 +43,5 @@
         "vite": "catalog:",
         "vite-plus": "catalog:"
     },
-    "packageManager": "pnpm@11.5.2"
+    "packageManager": "pnpm@12.8.1"
 }
